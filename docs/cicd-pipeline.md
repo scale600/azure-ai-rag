@@ -25,7 +25,7 @@ on:
 3. PR → `terraform plan`, comment the diff on the PR
 4. main → `terraform apply`
 
-- No `-auto-approve`, even in CI; apply only on main.
+- Apply runs only on main; `-auto-approve` is acceptable there because the PR plan is the review gate.
 
 ## Workflow 2 — `deploy` (`.github/workflows/deploy.yml`)
 

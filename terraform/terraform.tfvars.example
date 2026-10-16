@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars and adjust. Do NOT commit secrets here.
+location                = "centralus"
+existing_openai_name    = "oai-idp-rl01"
+existing_openai_rg      = "idp-prototype"
+embedding_model         = "text-embedding-3-small"
+embedding_model_version = "1"
+chat_model_deployment   = "gpt-4.1-mini"

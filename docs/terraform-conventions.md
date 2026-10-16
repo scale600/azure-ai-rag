@@ -6,12 +6,12 @@
 
 ```
 terraform/
-  backend.tf        # remote state (Azure Blob) — do not edit casually
-  providers.tf      # azurerm + required_version pinning
+  providers.tf      # terraform block (required_version, providers, backend) + azurerm provider
   main.tf           # resource definitions (flat for a prototype)
   variables.tf      # input variables (typed, described)
   outputs.tf        # values other steps need (endpoints, names)
   locals.tf         # naming/tagging helpers
+  terraform.tfvars.example  # committed example; copy to terraform.tfvars (ignored)
 ```
 
 - **Keep it flat** — no `modules/` until a resource set is reused by a second project.
