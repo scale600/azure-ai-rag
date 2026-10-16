@@ -68,7 +68,7 @@
 
 ## Phase 5 (M5) — Deploy, domain, docs, keep-warm
 
-- [ ] Build chat UI (static HTML/JS) → deploy to Static Web App (`azure/static-web-apps-deploy`)
+- [x] Build chat UI (static HTML/JS) → deploy to Static Web App (`azure/static-web-apps-deploy`)
 - [ ] Cloudflare DNS: `CNAME azure-ai-rag → <swa-host>.azurestaticapps.net` (proxied) + SWA verification record
 - [ ] Add custom domain `azure-ai-rag.techcloudup.com` to SWA (Free tier, free TLS)
   - ✔ HTTPS works on the custom domain
