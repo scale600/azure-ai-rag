@@ -25,7 +25,15 @@ terraform plan    # review the diff
 terraform apply   # after approval
 ```
 
-- App code deploys via GitHub Actions (SWA + App Service), not `terraform apply`.
+- UI deploys via GitHub Actions (`azure/static-web-apps-deploy`).
+- API deploys as a **pre-built-deps zip** (no on-host `pip install`, avoids the F1 quota):
+
+```bash
+pip install --platform manylinux2014_x86_64 --implementation cp --python-version 3.12 \
+  --only-binary=:all: --target /tmp/deps -r api/requirements.txt
+# bundle api/*.py + data/ + deps/ → zip
+az webapp deployment source config-zip -g ai-rag-prototype -n web-rag-rl01 --src /tmp/app.zip
+```
 
 ## One-time manual steps (not cleanly automatable)
 
@@ -37,7 +45,7 @@ terraform apply   # after approval
 ## Rollback
 
 - **Infra**: `git revert` the offending commit → `terraform plan` → `apply` (Terraform converges back).
-- **App**: redeploy the previous commit via GitHub Actions (`azure/static-web-apps-deploy` / `azure/webapps-deploy`).
+- **App**: redeploy the previous commit via GitHub Actions (UI) / `config-zip` (API).
 
 ## Teardown
 

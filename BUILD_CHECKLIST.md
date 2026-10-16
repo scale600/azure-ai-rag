@@ -15,7 +15,7 @@
 - [x] Confirm **no** Azure AI Search service exists yet (F0 free slot must be free)
   - `az resource list --resource-type Microsoft.Search/searchServices`
 - [x] Confirm existing n8n is reachable: `https://n8n.techcloudup.com/`
-- [ ] Confirm Cloudflare access to `techcloudup.com` DNS (can add CNAME/TXT)
+- [x] Confirm Cloudflare access to `techcloudup.com` DNS (can add CNAME/TXT)
 - [x] `git init` + commit `.gitignore` (already ignores `.env`, `.terraform/`, `*.tfstate*`)
 
 ## Phase 1 (M1) — Infrastructure + quota gate
@@ -77,6 +77,17 @@
 - [x] Write `README.md` (architecture / tech stack / structure / quick start)
 - [x] Write `runbook.md` (re-index, key rotation, quota increase)
 - [x] Final acceptance sweep (PRD §15) — eval 100% (20/20), warm p95 ~3s, HTTPS live
+
+---
+
+## Phase 6 — Cost reconfiguration (F1 + pre-built deps)
+
+- [x] Reconfigure App Service to **F1 free tier** (from B1) + remove ACR + Docker container
+- [x] Pre-install Linux deps (`pip --platform manylinux2014_x86_64`) → bundle in deploy zip
+- [x] Drop `tiktoken` (no manylinux wheel) → ~4 chars/token estimate in `ingest.py`
+- [x] App settings: `PYTHONPATH=/home/site/wwwroot/deps`, `DATA_DIR=/home/site/wwwroot/data`, `SCM_DO_BUILD_DURING_DEPLOYMENT=false`
+- [x] Startup: `python -m gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 1 app:app`
+- [x] Verify: state Running, `/health` 200, `/ask` ~1.6s (warm), total < $2/mo
 
 ---
 

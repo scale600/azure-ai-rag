@@ -40,12 +40,16 @@ App Service F1          — Flask API (/ask · /ingest · /health)
 .
 ├── PRD.md                     # product / requirements
 ├── BUILD_CHECKLIST.md         # executable build sequence
+├── runbook.md                 # day-2 operations
+├── api/                       # Flask API (app.py, rag.py, ingest.py, eval.py)
+├── data/                      # 31 financial docs (ingestion source)
+├── ui/                        # chat UI (index.html)
 ├── terraform/                 # IaC (providers, main, variables, locals, outputs)
 ├── docs/
 │   ├── terraform-conventions.md
 │   ├── deployment-runbook.md
 │   └── cicd-pipeline.md
-└── .github/workflows/         # terraform + deploy pipelines
+└── .github/workflows/         # terraform + deploy + keep-warm
 ```
 
 ## Quick start
@@ -63,6 +67,14 @@ terraform apply
 
 # 3. One-time manual secrets (see docs/deployment-runbook.md)
 #    - set openai-key + ai-search-key in Key Vault
+
+# 4. Deploy the Flask API with pre-built deps (no on-host build → keeps F1 quota)
+pip install --platform manylinux2014_x86_64 --implementation cp --python-version 3.12 \
+  --only-binary=:all: --target /tmp/deps -r api/requirements.txt
+#    bundle api/*.py + data/ + deps/ into a zip, then:
+az webapp deployment source config-zip -g ai-rag-prototype -n web-rag-rl01 --src app.zip
+
+# 5. Deploy the chat UI (push to main → GitHub Actions, or SWA CLI)
 ```
 
 ## Docs
@@ -75,4 +87,4 @@ terraform apply
 
 ## Status
 
-Service prototype — infra scaffold committed; app code (`api/`, `ui/`) and deployment pending. See `BUILD_CHECKLIST.md`.
+**Live** at `https://azure-ai-rag.techcloudup.com` — all phases complete (infra, 31-doc ingestion, RAG API with eval 100% (20/20), n8n re-index automation, deployment). Monthly cost **< $2** (free tiers + Azure OpenAI pay-as-you-go).

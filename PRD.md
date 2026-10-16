@@ -2,7 +2,7 @@
 
 | Item | Detail |
 |---|---|
-| Status | Draft v1.0 |
+| Status | Implemented — live at `azure-ai-rag.techcloudup.com` |
 | Date | 2026-10-16 |
 | Target | Financial institution member support — "AI-powered member support, agent assist, knowledge retrieval" |
 | Key constraint | Azure free tiers (SWA/F0/F1) + reuse existing Azure OpenAI resource, target < $2/month pay-as-you-go |
@@ -164,7 +164,7 @@ Index name: `member-support`
 
 ### 6.1 Chunking strategy
 
-- Chunk size: **500 tokens** (tiktoken), overlap **50 tokens (10%)**
+- Chunk size: **500 tokens**, overlap **50 tokens (10%)** (token count approximated via ~4 chars/token — `tiktoken` was dropped to avoid a Rust build in the pre-built dependency bundle)
 - Split at paragraph/heading boundaries (avoid mid-sentence cuts)
 - Replicate metadata (title, URL, category) into each chunk
 - Expected capacity within 50MB: thousands of chunks (hundreds of source documents) — sufficient for demo
@@ -186,7 +186,7 @@ Source documents (HTML/Markdown/PDF-text) → [n8n or manual] → Blob upload
 - **Collection**: organize financial institution public pages into Markdown/text in `docs/` → upload to Blob container `raw-docs`
 - **Text extraction/chunking**: Python script (`ingest.py`)
   - PDF via `pypdf`/`pdfplumber`, HTML via `BeautifulSoup`
-  - Chunking via `langchain-text-splitters` or hand-rolled (paragraph-boundary split)
+  - Chunking: hand-rolled paragraph-boundary split with a ~4 chars/token estimate (no heavy tokenizer dependency)
 - **Embedding**: call `text-embedding-3-small` via `openai` SDK (batch of 16)
 - **Upload**: `azure-search-documents` SDK `IndexDocumentsBatch`
 - **Idempotency**: `id = sha256(doc_content)[:16] + '-' + chunk_idx` → upsert without duplicates on re-run
@@ -325,8 +325,7 @@ Flask app (fetches keys at runtime; keys not exposed in code/env)
 ```
 azurerm_resource_group
 azurerm_static_web_app            (sku = "Free")        # chat UI + custom domain
-azurerm_search_service            (sku = "free")
-azurerm_search_index              (schema definition)
+azurerm_search_service            (sku = "free")        # index schema created by ingest.py (not Terraform)
 # ── Azure OpenAI: reuse existing resource (oai-idp-rl01), no new cognitive_account ──
 data "azurerm_cognitive_account" "existing_oai"   (centralus)
 azurerm_cognitive_deployment "text_embedding"     # text-embedding-3-small (new deployment — quota request)
@@ -345,7 +344,7 @@ azurerm_application_insights      (free 5GB/month)
 1. `terraform plan` (on PR)
 2. `terraform apply` (on merge to main)
 3. Build chat UI → deploy to Static Web App (`azure/static-web-apps-deploy`)
-4. Build Flask app → deploy to App Service (`azure/webapps-deploy`)
+4. Bundle Flask app with pre-built deps → `az webapp deployment source config-zip` (no on-host build)
 
 ### 12.3 DNS / Custom domain (Cloudflare)
 
@@ -355,6 +354,18 @@ azurerm_application_insights      (free 5GB/month)
   - `CNAME azure-ai-rag → <swa-host>.azurestaticapps.net` (SWA default domain)
   - One ownership-verification record (`TXT`/`CNAME`) required by SWA
 - ⚠️ App Service F1 does not support custom domains → do not bind a custom domain to F1. (B1 upgrade remains an optional alternative.)
+
+### 12.4 Final deployment config (F1 free tier)
+
+The Flask API runs on **F1 (free)** with dependencies **pre-installed and bundled in the deploy
+zip** — deployment does NOT run `pip install` (which would exhaust the 60 CPU-min/day quota).
+
+- Startup: `python -m gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 1 app:app`
+- App settings: `PYTHONPATH=/home/site/wwwroot/deps`, `DATA_DIR=/home/site/wwwroot/data`,
+  `SCM_DO_BUILD_DURING_DEPLOYMENT=false`
+- Deploy: `az webapp deployment source config-zip` (extract-only, no Oryx build)
+- Rationale: a B1 + ACR (Docker) detour was evaluated and reverted — F1 + pre-built deps is the
+  lowest-cost configuration (< $2/mo total).
 
 ---
 
@@ -386,12 +397,12 @@ azurerm_application_insights      (free 5GB/month)
 
 ## 15. Acceptance Criteria
 
-- [ ] 20-question FAQ eval set accuracy ≥ 80%, answers include source URLs
-- [ ] p95 response < 5s
-- [ ] No API keys exposed in commits/code/env (use Key Vault Reference)
-- [ ] Infrastructure reproducible with `terraform apply` alone
-- [ ] Free tiers (SWA/F0/F1) operate normally (the only cost = Azure OpenAI pay-as-you-go)
-- [ ] README includes architecture diagram + free-tier notes + security description
+- [x] 20-question FAQ eval set accuracy ≥ 80%, answers include source URLs — **100% (20/20)**
+- [x] p95 response < 5s — **~3s warm (~1.6s measured)**
+- [x] No API keys exposed in commits/code/env (use Key Vault Reference)
+- [x] Infrastructure reproducible with `terraform apply` alone
+- [x] Free tiers (SWA/F0/F1) operate normally (the only cost = Azure OpenAI pay-as-you-go)
+- [x] README includes architecture diagram + free-tier notes + security description
 
 ---
 

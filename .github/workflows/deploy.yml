@@ -1,5 +1,6 @@
-# NOTE: `api/` and `ui/` are placeholders until the Flask app and chat UI are scaffolded.
-# Add `AZURE_STATIC_WEB_APPS_API_TOKEN` (SWA deployment token) as a repo secret.
+# CI/CD deploy. Requires repo secrets:
+#   api job: AZURE_CLIENT_ID / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID (OIDC federation)
+#   ui  job: AZURE_STATIC_WEB_APPS_API_TOKEN (SWA deployment token)
 name: deploy
 
 on:
@@ -16,6 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pre-install deps + bundle zip (no on-host build)
+        run: |
+          pip install --target deps/ -r api/requirements.txt
+          mkdir -p pkg/data
+          cp api/app.py api/rag.py api/ingest.py api/requirements.txt pkg/
+          cp -r data/* pkg/data/
+          mv deps pkg/deps
+          (cd pkg && zip -qr ../app.zip .)
+
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
@@ -23,11 +37,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Flask API to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: web-rag-rl01
-          package: api/
+      - name: Deploy Flask API (config-zip, extract only)
+        run: az webapp deployment source config-zip -g ai-rag-prototype -n web-rag-rl01 --src app.zip
 
   ui:
     runs-on: ubuntu-latest

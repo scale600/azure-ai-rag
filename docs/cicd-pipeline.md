@@ -36,9 +36,11 @@ on:
 ```
 
 1. Build chat UI → `azure/static-web-apps-deploy` (Static Web App)
-2. Build Flask app → `azure/webapps-deploy` (App Service)
+2. Bundle Flask app with pre-built deps → `az webapp deployment source config-zip` (no on-host build)
 
 - UI and API are independent → run as parallel jobs.
+- The API is NOT built on the host: deps are `pip install`-ed into `deps/` on the runner and
+  shipped in the zip, so deployment does not consume the F1 60 CPU-min/day quota.
 
 ## Branch protection
 
