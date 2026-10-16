@@ -2,7 +2,7 @@
 
 **RAG-based member support knowledge retrieval on Azure** — a service prototype that answers member questions with grounded answers and citations, built on Azure free tiers and an existing Azure OpenAI resource.
 
-> Target: `azure-ai-rag.techcloudup.com` · Cost ceiling: **< $2/month** · Infra: **Terraform**
+> Target: `azure-ai-rag.techcloudup.com` · Infra: **Terraform**
 
 ## What it does
 
@@ -33,15 +33,6 @@ App Service F1          — Flask API (/ask · /ingest · /health)
 | CI/CD | GitHub Actions (OIDC → Azure) |
 | Secrets | Key Vault + Managed Identity |
 | Automation | n8n (existing instance) |
-
-## Cost (target)
-
-| Service | Cost |
-|---|---|
-| SWA Free + App Service F1 + AI Search F0 | $0 |
-| Azure OpenAI `gpt-4.1-mini` (demo traffic) | ~$0.5–1/mo |
-| Key Vault + Blob | < $0.02/mo |
-| **Total** | **< $2/mo** |
 
 ## Repo structure
 
