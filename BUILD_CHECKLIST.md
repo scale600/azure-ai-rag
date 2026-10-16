@@ -47,14 +47,14 @@
 
 ## Phase 3 (M3) — RAG API
 
-- [ ] Flask app: `POST /ask`, `POST /ingest`, `GET /health`
-- [ ] Hybrid search: vector + BM25, RRF fusion, top-k=5
-- [ ] Prompt template per PRD §8.2 (grounded + `[Sources: ...]`)
-- [ ] Response format per PRD §8.3 (answer + sources + latency + model)
-- [ ] CORS: allow only `azure-ai-rag.techcloudup.com`
-- [ ] Cost guardrail on `/ask`: daily query cap (e.g. 100/day) + rate limit (e.g. 1 req/5s per IP)
-- [ ] `X-API-Key` auth on `/ingest`
-- [ ] Eval: 20-question set → accuracy ≥ 80%, p95 < 5s (warm path)
+- [x] Flask app: `POST /ask`, `POST /ingest`, `GET /health`
+- [x] Hybrid search: vector + BM25, RRF fusion, top-k=5
+- [x] Prompt template per PRD §8.2 (grounded + `[Sources: ...]`)
+- [x] Response format per PRD §8.3 (answer + sources + latency + model)
+- [x] CORS: allow only `azure-ai-rag.techcloudup.com`
+- [x] Cost guardrail on `/ask`: daily query cap (e.g. 100/day) + rate limit (e.g. 1 req/5s per IP)
+- [x] `X-API-Key` auth on `/ingest`
+- [x] Eval: 20-question set → accuracy ≥ 80%, p95 < 5s (warm path) — result: 100% (20/20), ~3s
   - ⚠️ If accuracy < 80% → tune chunk size / top-k / prompt before moving on
 
 ## Phase 4 (M4) — Automation (re-index on doc change)
