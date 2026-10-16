@@ -59,12 +59,12 @@
 
 ## Phase 4 (M4) — Automation (re-index on doc change)
 
-- [ ] ⚠️ **DECIDE** sync mechanism (n8n has no native Azure Storage trigger):
+- [x] ⚠️ **DECIDE** sync mechanism — chose (a) n8n Schedule Trigger (hourly) (n8n has no native Azure Storage trigger):
   - (a) n8n **Schedule Trigger** polling Blob → `Flask /ingest` (simplest)
   - (b) **Event Grid → Webhook** → n8n
   - (c) **Azure Function (Blob trigger) → Flask /ingest**
-- [ ] Implement chosen path on the existing n8n instance (`n8n.techcloudup.com`)
-  - ✔ Upload a new doc → index auto-refreshes
+- [x] Implement chosen path on the existing n8n instance (`n8n.techcloudup.com`) — workflow "azure-ai-rag reindex" created + active
+  - ✔ Upload a new doc → index auto-refreshes (end-to-end verify pending Phase 5 deploy)
 
 ## Phase 5 (M5) — Deploy, domain, docs, keep-warm
 

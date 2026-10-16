@@ -18,6 +18,7 @@ from azure.search.documents.indexes.models import (
     VectorSearch,
     VectorSearchProfile,
 )
+from azure.storage.blob import BlobServiceClient
 from openai import AzureOpenAI, RateLimitError
 
 INDEX_NAME = "member-support"
@@ -55,6 +56,18 @@ def load_documents(data_dir):
             }
         )
     return documents
+
+
+def upload_raw_docs(data_dir):
+    connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+    if not connection_string:
+        return 0
+    container = BlobServiceClient.from_connection_string(connection_string).get_container_client("raw-docs")
+    count = 0
+    for path in data_dir.rglob("*.md"):
+        container.upload_blob(str(path.relative_to(data_dir)), path.read_bytes(), overwrite=True)
+        count += 1
+    return count
 
 
 def chunk_text(text, tokenizer):
@@ -154,6 +167,10 @@ def main():
     data_dir = Path(__file__).resolve().parent.parent / "data"
     documents = load_documents(data_dir)
     print(f"loaded {len(documents)} documents")
+
+    uploaded = upload_raw_docs(data_dir)
+    if uploaded:
+        print(f"uploaded {uploaded} raw docs to Blob raw-docs")
 
     tokenizer = tiktoken.get_encoding("cl100k_base")
     chunks = []

@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import threading
 import time
 from collections import defaultdict
 
@@ -80,6 +81,16 @@ def ask():
     return jsonify(result)
 
 
+def _run_ingestion():
+    script = os.path.join(os.path.dirname(__file__), "ingest.py")
+    return subprocess.run(
+        [sys.executable, script],
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+
+
 @app.route("/ingest", methods=["POST", "OPTIONS"])
 def ingest():
     if request.method == "OPTIONS":
@@ -87,16 +98,24 @@ def ingest():
     if not INGEST_API_KEY or request.headers.get("X-API-Key") != INGEST_API_KEY:
         return jsonify({"error": "unauthorized"}), 401
 
-    script = os.path.join(os.path.dirname(__file__), "ingest.py")
-    proc = subprocess.run(
-        [sys.executable, script],
-        capture_output=True,
-        text=True,
-        timeout=600,
-    )
+    proc = _run_ingestion()
     if proc.returncode == 0:
         return jsonify({"status": "ok"})
     return jsonify({"error": proc.stderr[-500:]}), 500
+
+
+@app.route("/webhook/reindex", methods=["POST"])
+def webhook_reindex():
+    events = request.get_json(silent=True) or []
+    for event in events:
+        event_type = event.get("eventType", "")
+        if event_type == "Microsoft.EventGrid.SubscriptionValidationEvent":
+            code = event.get("data", {}).get("validationCode", "")
+            return jsonify({"validationResponse": code})
+        if event_type == "Microsoft.Storage.BlobCreated":
+            threading.Thread(target=_run_ingestion, daemon=True).start()
+            return jsonify({"status": "reindexing"}), 202
+    return jsonify({"status": "ignored"}), 200
 
 
 if __name__ == "__main__":
