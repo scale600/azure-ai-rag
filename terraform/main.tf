@@ -22,8 +22,8 @@ resource "azurerm_cognitive_deployment" "embedding" {
     version = var.embedding_model_version
   }
 
-  scale {
-    type = "Standard"
+  sku {
+    name = "GlobalStandard"
   }
 }
 
@@ -36,69 +36,8 @@ resource "azurerm_search_service" "main" {
   tags                = local.tags
 }
 
-# Index: keyword-only by default. Uncomment the vector field once the M2
-# gate (F0 vector index provisioning) succeeds — see BUILD_CHECKLIST.md.
-resource "azurerm_search_index" "member_support" {
-  name                = "member-support"
-  resource_group_name = azurerm_resource_group.main.name
-  search_service_name = azurerm_search_service.main.name
-
-  fields {
-    name        = "id"
-    type        = "Edm.String"
-    key         = true
-    retrievable = true
-  }
-  fields {
-    name        = "content"
-    type        = "Edm.String"
-    searchable  = true
-    retrievable = true
-  }
-  fields {
-    name        = "title"
-    type        = "Edm.String"
-    searchable  = true
-    retrievable = true
-  }
-  fields {
-    name        = "source_url"
-    type        = "Edm.String"
-    retrievable = true
-  }
-  fields {
-    name        = "category"
-    type        = "Edm.String"
-    filterable  = true
-    facetable   = true
-    retrievable = true
-  }
-  fields {
-    name        = "chunk_id"
-    type        = "Edm.Int32"
-    retrievable = true
-  }
-  fields {
-    name        = "last_updated"
-    type        = "Edm.DateTimeOffset"
-    sortable    = true
-    retrievable = true
-  }
-
-  # ── Vector field (enable after F0 vector provisioning is confirmed) ──
-  # fields {
-  #   name                  = "content_vector"
-  #   type                  = "Collection(Edm.Single)"
-  #   dimensions            = 1536
-  #   retrievable           = true
-  #   vector_search_profile = "hnsw-profile"
-  # }
-  #
-  # vector_search_profile {
-  #   name      = "hnsw-profile"
-  #   algorithm = "hnsw"
-  # }
-}
+# The search index is a data-plane resource created at runtime by ingest.py
+# (azure-search-documents SDK) — not an ARM resource, so it isn't defined here.
 
 # ── Storage (raw docs) ─────────────────────────────────────────
 resource "azurerm_storage_account" "main" {
@@ -112,7 +51,7 @@ resource "azurerm_storage_account" "main" {
 
 resource "azurerm_storage_container" "raw_docs" {
   name                  = "raw-docs"
-  storage_account_name  = azurerm_storage_account.main.name
+  storage_account_id    = azurerm_storage_account.main.id
   container_access_type = "private"
 }
 
@@ -133,6 +72,15 @@ resource "azurerm_key_vault_access_policy" "app_service" {
   object_id    = azurerm_linux_web_app.main.identity[0].principal_id
 
   secret_permissions = ["Get"]
+}
+
+# Grants the operator (Terraform runner) permission to inject secrets manually.
+resource "azurerm_key_vault_access_policy" "operator" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = ["Get", "Set", "List", "Delete"]
 }
 
 # ── App Service (Flask API) ────────────────────────────────────
@@ -166,6 +114,7 @@ resource "azurerm_linux_web_app" "main" {
   }
 
   site_config {
+    always_on = false # F1 free tier does not support Always On
     application_stack {
       python_version = "3.12"
     }

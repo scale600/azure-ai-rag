@@ -20,18 +20,18 @@
 
 ## Phase 1 (M1) — Infrastructure + quota gate
 
-- [ ] ⛔ **GATE — embedding quota**: request `text-embedding-3-small` deployment on `oai-idp-rl01` (centralus)
+- [x] ⛔ **GATE — embedding quota**: request `text-embedding-3-small` deployment on `oai-idp-rl01` (centralus)
   - ⚠️ If denied → drop vector search entirely (keyword-only BM25), skip embedding entirely
   - If approved → record the deployment name (`text-embedding-3-small`)
 - [x] Scaffold Terraform: `main.tf`, `variables.tf`, `outputs.tf`, `backend.tf` (remote tfstate in Blob)
 - [x] Define resources: resource group, `azurerm_static_web_app` (Free), `azurerm_search_service` (free), `azurerm_linux_web_app` (F1), Key Vault + access policy, storage account + `raw-docs` container, App Insights
 - [x] Azure OpenAI: use `data "azurerm_cognitive_account"` for `oai-idp-rl01` (do **not** create a new one); add `azurerm_cognitive_deployment` for the embedding model only
-- [ ] `terraform plan` → `terraform apply`
+- [x] `terraform plan` → `terraform apply`
   - ✔ `terraform apply` reproduces infra from empty state
 - [ ] Create `member-support` index schema (per PRD §6); set `content_vector` as `Collection(Edm.Single)` vector(1536), HNSW
 - [ ] ⛔ **GATE — F0 vector index**: confirm the vector index provisions without hanging at "Allocating compute"
   - ⚠️ If it hangs/fails → drop `content_vector`, go keyword-only BM25
-- [ ] Manually inject secrets into Key Vault: `ai-search-key`, `openai-key` (from `oai-idp-rl01`)
+- [x] Manually inject secrets into Key Vault: `ai-search-key`, `openai-key` (from `oai-idp-rl01`)
   - `az keyvault secret set --name openai-key --vault-name <kv> --value <key>`
 - [x] Grant App Service system-assigned MI `get` on Key Vault (access policy)
 - [x] Wire App Settings with `@Microsoft.KeyVault(SecretUri=...)` references (no hardcoded keys)
