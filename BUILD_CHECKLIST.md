@@ -74,7 +74,8 @@
   - ✔ HTTPS works on the custom domain
 - [ ] Set Azure Cost Management budget alert at **$2**
 - [ ] Keep-warm: free uptime monitor (or GH Actions cron) pinging `/health` every ~5 min (keeps F1 warm + F0 alive)
-- [ ] Write `README.md` (architecture / cost / security) + `runbook.md` (re-index, key rotation, quota increase)
+- [x] Write `README.md` (architecture / tech stack / structure / quick start)
+- [ ] Write `runbook.md` (re-index, key rotation, quota increase)
 - [ ] Final acceptance sweep (PRD §15)
 
 ---
