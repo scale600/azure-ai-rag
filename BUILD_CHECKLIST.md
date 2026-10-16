@@ -69,13 +69,13 @@
 ## Phase 5 (M5) — Deploy, domain, docs, keep-warm
 
 - [x] Build chat UI (static HTML/JS) → deploy to Static Web App (`azure/static-web-apps-deploy`)
-- [ ] Cloudflare DNS: `CNAME azure-ai-rag → <swa-host>.azurestaticapps.net` (proxied) + SWA verification record
-- [ ] Add custom domain `azure-ai-rag.techcloudup.com` to SWA (Free tier, free TLS)
-  - ✔ HTTPS works on the custom domain
+- [x] Cloudflare DNS: `CNAME azure-ai-rag → green-mud-0bccf6910.3.azurestaticapps.net` (proxy OFF for validation)
+- [x] Add custom domain `azure-ai-rag.techcloudup.com` to SWA (Free tier, free TLS)
+  - ✔ HTTPS works on the custom domain (DigiCert cert, status Ready)
 - [ ] Set Azure Cost Management budget alert at **$2**
-- [ ] Keep-warm: free uptime monitor (or GH Actions cron) pinging `/health` every ~5 min (keeps F1 warm + F0 alive)
+- [x] Keep-warm: GH Actions cron pinging `/health` every ~5 min (keeps F1 warm + F0 alive)
 - [x] Write `README.md` (architecture / tech stack / structure / quick start)
-- [ ] Write `runbook.md` (re-index, key rotation, quota increase)
+- [x] Write `runbook.md` (re-index, key rotation, quota increase)
 - [ ] Final acceptance sweep (PRD §15)
 
 ---
