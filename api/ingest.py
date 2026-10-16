@@ -164,7 +164,7 @@ def main():
     openai_key = require_env("AZURE_OPENAI_KEY")
     embedding_deployment = require_env("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
 
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(os.environ.get("DATA_DIR") or (Path(__file__).resolve().parent.parent / "data"))
     documents = load_documents(data_dir)
     print(f"loaded {len(documents)} documents")
 

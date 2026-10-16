@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Support Assistant</title>
+  <style>
+    :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #e2e8f0; --muted: #94a3b8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+    #chat { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .msg { padding: 12px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; }
+    .user { background: var(--accent); color: #0f172a; align-self: flex-end; max-width: 85%; }
+    .assistant { background: var(--panel); max-width: 100%; }
+    .src { display: block; margin-top: 8px; color: var(--muted); font-size: 0.8rem; }
+    .src a { color: var(--accent); text-decoration: none; }
+    .src a:hover { text-decoration: underline; }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: var(--panel); color: var(--text); font-size: 1rem; }
+    input:focus { outline: none; border-color: var(--accent); }
+    button { padding: 12px 18px; border-radius: 10px; border: none; background: var(--accent); color: #0f172a; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .err { color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Member Support Assistant</h1>
+    <p class="sub">Grounded answers with citations · Azure RAG prototype</p>
+    <div id="chat"></div>
+    <form id="form">
+      <input id="question" placeholder="Ask about fees, loans, accounts…" autocomplete="off" />
+      <button id="send" type="submit">Ask</button>
+    </form>
+  </div>
+  <script>
+    const API_BASE = "https://web-rag-rl01.azurewebsites.net";
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("question");
+    const send = document.getElementById("send");
+
+    function addMessage(role, text, sources) {
+      const el = document.createElement("div");
+      el.className = "msg " + role;
+      el.textContent = text;
+      if (sources && sources.length) {
+        const s = document.createElement("span");
+        s.className = "src";
+        s.innerHTML = "Sources: " + sources.map((x, i) => `<a href="${x.url}" target="_blank">${i + 1}</a>`).join(", ");
+        el.appendChild(s);
+      }
+      chat.appendChild(el);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+      addMessage("user", q);
+      input.value = "";
+      send.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q }),
+        });
+        const data = await res.json();
+        if (!res.ok) { addMessage("assistant", "Error: " + (data.error || res.status)); return; }
+        addMessage("assistant", data.answer, data.sources);
+      } catch (err) {
+        addMessage("assistant", "Request failed: " + err.message);
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

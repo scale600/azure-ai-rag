@@ -113,6 +113,7 @@ resource "azurerm_linux_web_app" "main" {
     "AZURE_SEARCH_KEY"                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ai-search-key/)"
     "INGEST_API_KEY"                       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ingest-api-key/)"
     "AZURE_STORAGE_CONNECTION_STRING"      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/storage-conn/)"
+    "DATA_DIR"                             = "/home/site/wwwroot/data"
   }
 
   site_config {
