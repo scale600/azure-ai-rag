@@ -8,24 +8,24 @@
 
 ## Phase 0 — Pre-flight (verify existing assets, no code yet)
 
-- [ ] `az login` and confirm active subscription = `Azure subscription 1`
+- [x] `az login` and confirm active subscription = `Azure subscription 1`
   - `az account show`
-- [ ] Confirm existing Azure OpenAI `oai-idp-rl01` (centralus, S0) still has `gpt-4.1-mini` deployed
+- [x] Confirm existing Azure OpenAI `oai-idp-rl01` (centralus, S0) still has `gpt-4.1-mini` deployed
   - `az cognitiveservices account deployment list -g idp-prototype -n oai-idp-rl01`
-- [ ] Confirm **no** Azure AI Search service exists yet (F0 free slot must be free)
+- [x] Confirm **no** Azure AI Search service exists yet (F0 free slot must be free)
   - `az resource list --resource-type Microsoft.Search/searchServices`
 - [ ] Confirm existing n8n is reachable: `https://n8n.techcloudup.com/`
 - [ ] Confirm Cloudflare access to `techcloudup.com` DNS (can add CNAME/TXT)
-- [ ] `git init` + commit `.gitignore` (already ignores `.env`, `.terraform/`, `*.tfstate*`)
+- [x] `git init` + commit `.gitignore` (already ignores `.env`, `.terraform/`, `*.tfstate*`)
 
 ## Phase 1 (M1) — Infrastructure + quota gate
 
 - [ ] ⛔ **GATE — embedding quota**: request `text-embedding-3-small` deployment on `oai-idp-rl01` (centralus)
   - ⚠️ If denied → drop vector search entirely (keyword-only BM25), skip embedding entirely
   - If approved → record the deployment name (`text-embedding-3-small`)
-- [ ] Scaffold Terraform: `main.tf`, `variables.tf`, `outputs.tf`, `backend.tf` (remote tfstate in Blob)
-- [ ] Define resources: resource group, `azurerm_static_web_app` (Free), `azurerm_search_service` (free), `azurerm_linux_web_app` (F1), Key Vault + access policy, storage account + `raw-docs` container, App Insights
-- [ ] Azure OpenAI: use `data "azurerm_cognitive_account"` for `oai-idp-rl01` (do **not** create a new one); add `azurerm_cognitive_deployment` for the embedding model only
+- [x] Scaffold Terraform: `main.tf`, `variables.tf`, `outputs.tf`, `backend.tf` (remote tfstate in Blob)
+- [x] Define resources: resource group, `azurerm_static_web_app` (Free), `azurerm_search_service` (free), `azurerm_linux_web_app` (F1), Key Vault + access policy, storage account + `raw-docs` container, App Insights
+- [x] Azure OpenAI: use `data "azurerm_cognitive_account"` for `oai-idp-rl01` (do **not** create a new one); add `azurerm_cognitive_deployment` for the embedding model only
 - [ ] `terraform plan` → `terraform apply`
   - ✔ `terraform apply` reproduces infra from empty state
 - [ ] Create `member-support` index schema (per PRD §6); set `content_vector` as `Collection(Edm.Single)` vector(1536), HNSW
@@ -33,9 +33,9 @@
   - ⚠️ If it hangs/fails → drop `content_vector`, go keyword-only BM25
 - [ ] Manually inject secrets into Key Vault: `ai-search-key`, `openai-key` (from `oai-idp-rl01`)
   - `az keyvault secret set --name openai-key --vault-name <kv> --value <key>`
-- [ ] Grant App Service system-assigned MI `get` on Key Vault (access policy)
-- [ ] Wire App Settings with `@Microsoft.KeyVault(SecretUri=...)` references (no hardcoded keys)
-- [ ] GitHub Actions: `terraform plan` (PR) + `terraform apply` (main) + build/deploy steps
+- [x] Grant App Service system-assigned MI `get` on Key Vault (access policy)
+- [x] Wire App Settings with `@Microsoft.KeyVault(SecretUri=...)` references (no hardcoded keys)
+- [x] GitHub Actions: `terraform plan` (PR) + `terraform apply` (main) + build/deploy steps
 
 ## Phase 2 (M2) — Data + ingestion
 
