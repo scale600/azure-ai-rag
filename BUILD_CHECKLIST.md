@@ -28,8 +28,8 @@
 - [x] Azure OpenAI: use `data "azurerm_cognitive_account"` for `oai-idp-rl01` (do **not** create a new one); add `azurerm_cognitive_deployment` for the embedding model only
 - [x] `terraform plan` → `terraform apply`
   - ✔ `terraform apply` reproduces infra from empty state
-- [ ] Create `member-support` index schema (per PRD §6); set `content_vector` as `Collection(Edm.Single)` vector(1536), HNSW
-- [ ] ⛔ **GATE — F0 vector index**: confirm the vector index provisions without hanging at "Allocating compute"
+- [x] Create `member-support` index schema (per PRD §6); set `content_vector` as `Collection(Edm.Single)` vector(1536), HNSW
+- [x] ⛔ **GATE — F0 vector index**: confirm the vector index provisions without hanging at "Allocating compute"
   - ⚠️ If it hangs/fails → drop `content_vector`, go keyword-only BM25
 - [x] Manually inject secrets into Key Vault: `ai-search-key`, `openai-key` (from `oai-idp-rl01`)
   - `az keyvault secret set --name openai-key --vault-name <kv> --value <key>`
@@ -39,10 +39,10 @@
 
 ## Phase 2 (M2) — Data + ingestion
 
-- [ ] Collect 30+ FAQ / fee / loan documents into `docs/` (Markdown/text)
-- [ ] Write `ingest.py`: extract (`pypdf`/`BeautifulSoup`) → chunk (500 tokens / 50 overlap) → embed (`text-embedding-3-small`, batch 16) → upsert (`IndexDocumentsBatch`)
-- [ ] Idempotency: `id = sha256(content)[:16] + '-' + chunk_idx`
-- [ ] Run ingestion → upload to Blob `raw-docs` → index
+- [x] Collect 30+ FAQ / fee / loan documents into `data/` (Markdown/text)
+- [x] Write `ingest.py`: chunk (500 tokens / 50 overlap) → embed (`text-embedding-3-small`) → upsert (`IndexDocumentsBatch`)
+- [x] Idempotency: `id = sha256(content)[:16] + '-' + chunk_idx`
+- [x] Run ingestion → index (Blob `raw-docs` upload deferred to Phase 4 n8n sync)
   - ✔ Documents visible in AI Search portal; citation `source_url` populated
 
 ## Phase 3 (M3) — RAG API
