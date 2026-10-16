@@ -14,7 +14,7 @@
   - `az cognitiveservices account deployment list -g idp-prototype -n oai-idp-rl01`
 - [x] Confirm **no** Azure AI Search service exists yet (F0 free slot must be free)
   - `az resource list --resource-type Microsoft.Search/searchServices`
-- [ ] Confirm existing n8n is reachable: `https://n8n.techcloudup.com/`
+- [x] Confirm existing n8n is reachable: `https://n8n.techcloudup.com/`
 - [ ] Confirm Cloudflare access to `techcloudup.com` DNS (can add CNAME/TXT)
 - [x] `git init` + commit `.gitignore` (already ignores `.env`, `.terraform/`, `*.tfstate*`)
 
