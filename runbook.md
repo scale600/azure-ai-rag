@@ -8,16 +8,19 @@ Day-2 operations for the `azure-ai-rag` service prototype.
 # Infrastructure (Terraform)
 cd terraform && terraform plan && terraform apply
 
-# App (Flask API) — Docker container via ACR (cloud build)
-az acr build --registry airagcr2026 --image azure-ai-rag:latest .
-az webapp restart -g ai-rag-prototype -n web-rag-rl01
+# App (Flask API) — pre-built deps (no build on App Service, keeps F1 free-tier quota)
+pip install --platform manylinux2014_x86_64 --implementation cp --python-version 3.12 \
+  --only-binary=:all: --target /tmp/deps -r api/requirements.txt
+# then bundle api/*.py + data/ + deps/ into a zip and:
+az webapp deployment source config-zip -g ai-rag-prototype -n web-rag-rl01 --src /tmp/app.zip
 
 # UI — via GitHub Actions (push to main) or SWA CLI
 #   azure/static-web-apps-deploy with app_location: ui/
 ```
 
-> App Service runs a custom container (`DOCKER|airagcr2026.azurecr.io/azure-ai-rag:latest`) on
-> the B1 tier. ACR credentials are set via `DOCKER_REGISTRY_SERVER_*` app settings.
+> App Service runs on the **F1 free tier** with dependencies pre-installed (bundled in the zip),
+> so deployment does NOT run `pip install`. Startup: `python -m gunicorn ... app:app` with
+> `PYTHONPATH=/home/site/wwwroot/deps`. This avoids the 60 CPU-min/day quota.
 
 ## Re-index
 

@@ -89,7 +89,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   os_type             = "Linux"
-  sku_name            = "B1" # Basic — dedicated compute, no daily CPU quota
+  sku_name            = "F1" # free — 60 CPU-min/day
   tags                = local.tags
 }
 
@@ -113,11 +113,12 @@ resource "azurerm_linux_web_app" "main" {
     "AZURE_SEARCH_KEY"                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ai-search-key/)"
     "INGEST_API_KEY"                       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ingest-api-key/)"
     "AZURE_STORAGE_CONNECTION_STRING"      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/storage-conn/)"
-    "DATA_DIR"                             = "/app/data"
+    "DATA_DIR"                             = "/home/site/wwwroot/data"
+    "PYTHONPATH"                           = "/home/site/wwwroot/deps"
   }
 
   site_config {
-    always_on = true
+    always_on = false
     application_stack {
       python_version = "3.12"
     }

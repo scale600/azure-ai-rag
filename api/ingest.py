@@ -6,7 +6,6 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import tiktoken
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
@@ -70,17 +69,21 @@ def upload_raw_docs(data_dir):
     return count
 
 
-def chunk_text(text, tokenizer):
+def _token_count(text):
+    return max(1, len(text) // 4)
+
+
+def chunk_text(text):
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     chunks = []
     current = []
     current_len = 0
     for para in paragraphs:
-        para_len = len(tokenizer.encode(para))
+        para_len = _token_count(para)
         if current and current_len + para_len > CHUNK_SIZE_TOKENS:
             chunks.append("\n\n".join(current))
-            current = _overlap_tail(current, tokenizer)
-            current_len = sum(len(tokenizer.encode(p)) for p in current)
+            current = _overlap_tail(current)
+            current_len = sum(_token_count(p) for p in current)
         current.append(para)
         current_len += para_len
     if current:
@@ -88,11 +91,11 @@ def chunk_text(text, tokenizer):
     return chunks
 
 
-def _overlap_tail(paras, tokenizer):
+def _overlap_tail(paras):
     tail = []
     length = 0
     for para in reversed(paras):
-        para_len = len(tokenizer.encode(para))
+        para_len = _token_count(para)
         if length + para_len > OVERLAP_TOKENS:
             break
         tail.insert(0, para)
@@ -172,10 +175,9 @@ def main():
     if uploaded:
         print(f"uploaded {uploaded} raw docs to Blob raw-docs")
 
-    tokenizer = tiktoken.get_encoding("cl100k_base")
     chunks = []
     for doc in documents:
-        for chunk_idx, chunk in enumerate(chunk_text(doc["body"], tokenizer)):
+        for chunk_idx, chunk in enumerate(chunk_text(doc["body"])):
             chunks.append({"doc": doc, "chunk": chunk, "chunk_idx": chunk_idx})
     print(f"produced {len(chunks)} chunks")
 
