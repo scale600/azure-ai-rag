@@ -76,7 +76,7 @@
 - [x] Keep-warm: GH Actions cron pinging `/health` every ~5 min (keeps F1 warm + F0 alive)
 - [x] Write `README.md` (architecture / tech stack / structure / quick start)
 - [x] Write `runbook.md` (re-index, key rotation, quota increase)
-- [ ] Final acceptance sweep (PRD §15)
+- [x] Final acceptance sweep (PRD §15) — eval 100% (20/20), warm p95 ~3s, HTTPS live
 
 ---
 

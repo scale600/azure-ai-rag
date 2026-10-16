@@ -8,19 +8,16 @@ Day-2 operations for the `azure-ai-rag` service prototype.
 # Infrastructure (Terraform)
 cd terraform && terraform plan && terraform apply
 
-# App (Flask API) — zip deploy
-rm -rf /tmp/app_package && mkdir -p /tmp/app_package/data
-cp api/app.py api/rag.py api/ingest.py api/requirements.txt /tmp/app_package/
-cp -r data/* /tmp/app_package/data/
-(cd /tmp/app_package && zip -qr /tmp/app.zip .)
-az webapp deploy -g ai-rag-prototype -n web-rag-rl01 --type zip --src-path /tmp/app.zip
+# App (Flask API) — Docker container via ACR (cloud build)
+az acr build --registry airagcr2026 --image azure-ai-rag:latest .
+az webapp restart -g ai-rag-prototype -n web-rag-rl01
 
 # UI — via GitHub Actions (push to main) or SWA CLI
 #   azure/static-web-apps-deploy with app_location: ui/
 ```
 
-> ⚠️ App Service F1 has a 60 CPU-min/day quota. The Oryx build (pip install) can exhaust
-> it. Deploy sparingly; if the app reports "QuotaExceeded", wait for the daily reset.
+> App Service runs a custom container (`DOCKER|airagcr2026.azurecr.io/azure-ai-rag:latest`) on
+> the B1 tier. ACR credentials are set via `DOCKER_REGISTRY_SERVER_*` app settings.
 
 ## Re-index
 

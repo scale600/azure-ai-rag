@@ -1,0 +1,9 @@
+.git
+.venv
+terraform
+docs
+.github
+*.md
+.env
+Dockerfile
+.dockerignore

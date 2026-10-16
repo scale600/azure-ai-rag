@@ -89,7 +89,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   os_type             = "Linux"
-  sku_name            = "F1" # free — 60 CPU-min/day, no Always On
+  sku_name            = "B1" # Basic — dedicated compute, no daily CPU quota
   tags                = local.tags
 }
 
@@ -113,11 +113,11 @@ resource "azurerm_linux_web_app" "main" {
     "AZURE_SEARCH_KEY"                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ai-search-key/)"
     "INGEST_API_KEY"                       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/ingest-api-key/)"
     "AZURE_STORAGE_CONNECTION_STRING"      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault.main.vault_uri}secrets/storage-conn/)"
-    "DATA_DIR"                             = "/home/site/wwwroot/data"
+    "DATA_DIR"                             = "/app/data"
   }
 
   site_config {
-    always_on = false # F1 free tier does not support Always On
+    always_on = true
     application_stack {
       python_version = "3.12"
     }
