@@ -55,6 +55,7 @@
     .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     .meta { margin-top: 10px; color: var(--muted); font-size: 0.75rem; }
+    .demo-tag { display: inline-block; margin-top: 8px; font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
     .src { display: block; margin-top: 6px; color: var(--muted); font-size: 0.8rem; }
     .src a { color: var(--accent); text-decoration: none; margin-right: 2px; }
     .src a:hover { text-decoration: underline; }
@@ -430,7 +431,114 @@
       }
     });
 
+    // --- Attract-mode auto demo (canned content, no API calls) ---
+    const DEMO = [
+      { q: "What are the overdraft fees?", a: "$35 per overdraft item, up to 3 per day. Transactions under $5 are free. Overdraft-protection transfers cost $12 each." },
+      { q: "What documents do I need for identity verification?", a: "A driver's license or state ID, passport, permanent resident card, or military ID, plus your legal name, date of birth, SSN, and address." },
+      { q: "What are your branch hours?", a: "Monday–Friday 9am–5pm, Saturday 9am–1pm, closed Sunday and federal holidays." },
+      { q: "How do I apply for a home loan?", a: "Get pre-approved, then search, make an offer, and go through underwriting to closing — typically 30–45 days. Minimum credit score is 620." },
+    ];
+
+    const DEMO_STOP_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "wheel"];
+    let demoActive = false;
+    let demoIndex = 0;
+    let demoTimer = null;
+
+    function wait(ms) {
+      return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    function typeText(text) {
+      return new Promise(function (resolve) {
+        let i = 0;
+        function step() {
+          if (!demoActive) { resolve(); return; }
+          if (i <= text.length) {
+            input.value = text.slice(0, i);
+            i++;
+            demoTimer = setTimeout(step, 35);
+          } else {
+            resolve();
+          }
+        }
+        step();
+      });
+    }
+
+    function addDemoAnswer(text) {
+      const el = document.createElement("div");
+      el.className = "msg assistant";
+      const body = document.createElement("div");
+      body.className = "md";
+      body.innerHTML = renderMarkdown(text);
+      el.appendChild(body);
+      const tag = document.createElement("span");
+      tag.className = "demo-tag";
+      tag.textContent = "Demo";
+      el.appendChild(tag);
+      chat.appendChild(el);
+      scrollToBottom();
+    }
+
+    function stopDemo() {
+      demoActive = false;
+      clearTimeout(demoTimer);
+      chat.innerHTML = "";
+      input.value = "";
+      updateExamples();
+    }
+
+    function onFirstInteraction() {
+      stopDemo();
+      unbindDemoStop();
+    }
+
+    function bindDemoStop() {
+      DEMO_STOP_EVENTS.forEach(function (evt) {
+        document.addEventListener(evt, onFirstInteraction, { passive: true });
+      });
+    }
+
+    function unbindDemoStop() {
+      DEMO_STOP_EVENTS.forEach(function (evt) {
+        document.removeEventListener(evt, onFirstInteraction);
+      });
+    }
+
+    async function runDemoStep() {
+      if (!demoActive) return;
+      const item = DEMO[demoIndex % DEMO.length];
+      await typeText(item.q);
+      if (!demoActive) return;
+      addUserMessage(item.q);
+      input.value = "";
+      const typing = addTypingIndicator();
+      await wait(900);
+      typing.remove();
+      if (!demoActive) return;
+      addDemoAnswer(item.a);
+      demoIndex++;
+      demoTimer = setTimeout(function () {
+        if (!demoActive) return;
+        chat.innerHTML = "";
+        updateExamples();
+        runDemoStep();
+      }, 3500);
+    }
+
+    function startDemo() {
+      demoActive = true;
+      demoIndex = 0;
+      runDemoStep();
+    }
+
+    function initDemo() {
+      bindDemoStop();
+      demoTimer = setTimeout(startDemo, 1500);
+    }
+
     updateExamples();
+    initDemo();
   </script>
 </body>
 </html>
