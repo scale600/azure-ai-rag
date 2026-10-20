@@ -18,7 +18,7 @@
     .ghost { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 500; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
     .ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
     .nav { display: flex; gap: 2px; }
     .nav-link { background: transparent; border: none; color: var(--muted); font-size: 0.85rem; padding: 8px 10px; cursor: pointer; border-radius: 8px; }
     .nav-link:hover { color: var(--accent); }
@@ -87,6 +87,13 @@
 </head>
 <body>
   <div class="wrap">
+    <div class="topbar">
+      <nav class="nav" aria-label="Site">
+        <button class="nav-link" type="button" data-modal="about">About</button>
+        <button class="nav-link" type="button" data-modal="how-it-works">How it works</button>
+      </nav>
+      <button id="newChat" class="ghost" type="button">New chat</button>
+    </div>
     <div class="header">
       <div>
         <div class="title-row">
@@ -94,13 +101,6 @@
           <span class="badge">Prototype</span>
         </div>
         <p class="sub">Financial institution member support — ask about fees, accounts, cards, and loans. Answers are grounded in official documents with citations.</p>
-      </div>
-      <div class="header-actions">
-        <nav class="nav" aria-label="Site">
-          <button class="nav-link" type="button" data-modal="about">About</button>
-          <button class="nav-link" type="button" data-modal="how-it-works">How it works</button>
-        </nav>
-        <button id="newChat" class="ghost" type="button">New chat</button>
       </div>
     </div>
     <div id="chat"></div>
