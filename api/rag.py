@@ -33,6 +33,10 @@ class RAG:
             api_key=os.environ["AZURE_OPENAI_KEY"],
             api_version="2024-06-01",
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            # Fail fast on upstream hangs/429 instead of blocking the worker
+            # (SDK default is 600s timeout + 2 retries); _retry handles backoff.
+            timeout=30.0,
+            max_retries=0,
         )
         self.embedding_deployment = os.environ["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"]
         self.chat_deployment = os.environ.get("AZURE_OPENAI_CHAT_DEPLOYMENT", "gpt-4.1-mini")
