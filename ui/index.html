@@ -76,6 +76,7 @@
     .chip { background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 0.85rem; padding: 8px 12px; border-radius: 999px; font-weight: 500; cursor: pointer; }
     .chip:hover { border-color: var(--accent); color: var(--accent); }
 
+    .chat-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
     form { display: flex; gap: 8px; }
     input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 1rem; }
     input:focus { outline: none; border-color: var(--accent); }
@@ -92,7 +93,6 @@
         <button class="nav-link" type="button" data-modal="about">About</button>
         <button class="nav-link" type="button" data-modal="how-it-works">How it works</button>
       </nav>
-      <button id="newChat" class="ghost" type="button">New chat</button>
     </div>
     <div class="header">
       <div>
@@ -107,6 +107,9 @@
     <div id="examples" class="examples">
       <p class="examples-label">Try asking</p>
       <div class="chips" id="chips"></div>
+    </div>
+    <div class="chat-actions">
+      <button id="newChat" class="ghost" type="button">New chat</button>
     </div>
     <form id="form">
       <input id="question" placeholder="Ask about fees, loans, accounts…" autocomplete="off" />
