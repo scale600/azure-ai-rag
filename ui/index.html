@@ -5,35 +5,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Member Support Assistant</title>
   <style>
-    :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #e2e8f0; --muted: #94a3b8; }
+    :root { --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; --danger: #fca5a5; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 32px; }
+
+    .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; }
-    .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+    .sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; }
+    .ghost { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 500; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+    .ghost:hover { border-color: var(--accent); color: var(--accent); }
+
     #chat { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-    .msg { padding: 12px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; }
+    .msg { padding: 12px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; position: relative; }
     .user { background: var(--accent); color: #0f172a; align-self: flex-end; max-width: 85%; }
     .assistant { background: var(--panel); max-width: 100%; }
-    .src { display: block; margin-top: 8px; color: var(--muted); font-size: 0.8rem; }
-    .src a { color: var(--accent); text-decoration: none; }
+    .assistant.has-copy { padding-right: 64px; }
+    .md { white-space: normal; }
+    .md p { margin: 0 0 8px; }
+    .md p:last-child { margin-bottom: 0; }
+    .md ul, .md ol { margin: 0 0 8px; padding-left: 20px; }
+    .md li { margin: 2px 0; }
+
+    .copy-btn { position: absolute; top: 8px; right: 8px; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 500; cursor: pointer; }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .meta { margin-top: 10px; color: var(--muted); font-size: 0.75rem; }
+    .src { display: block; margin-top: 6px; color: var(--muted); font-size: 0.8rem; }
+    .src a { color: var(--accent); text-decoration: none; margin-right: 2px; }
     .src a:hover { text-decoration: underline; }
+
+    .error { border: 1px solid rgba(252, 165, 165, 0.4); }
+    .err-text { color: var(--danger); }
+    .retry-btn { margin-top: 10px; background: transparent; border: 1px solid var(--accent); color: var(--accent); font-size: 0.8rem; padding: 6px 12px; border-radius: 8px; font-weight: 500; cursor: pointer; }
+    .retry-btn:hover { background: var(--accent); color: #0f172a; }
+
+    .typing { display: flex; gap: 5px; align-items: center; padding: 16px 14px; width: fit-content; }
+    .typing .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite ease-in-out; }
+    .typing .dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+    .examples { margin-bottom: 16px; }
+    .examples-label { color: var(--muted); font-size: 0.8rem; margin: 0 0 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 0.85rem; padding: 8px 12px; border-radius: 999px; font-weight: 500; cursor: pointer; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
     form { display: flex; gap: 8px; }
-    input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: var(--panel); color: var(--text); font-size: 1rem; }
+    input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 1rem; }
     input:focus { outline: none; border-color: var(--accent); }
-    button { padding: 12px 18px; border-radius: 10px; border: none; background: var(--accent); color: #0f172a; font-weight: 600; cursor: pointer; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .err { color: #fca5a5; }
+    button.primary { padding: 12px 18px; border-radius: 10px; border: none; background: var(--accent); color: #0f172a; font-weight: 600; cursor: pointer; }
+    button.primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.primary.loading::before { content: ""; display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(15, 23, 42, 0.3); border-top-color: #0f172a; border-radius: 50%; margin-right: 7px; vertical-align: -1px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Member Support Assistant</h1>
-    <p class="sub">Grounded answers with citations · Azure RAG prototype</p>
+    <div class="header">
+      <div>
+        <h1>Member Support Assistant</h1>
+        <p class="sub">Grounded answers with citations · Azure RAG prototype</p>
+      </div>
+      <button id="newChat" class="ghost" type="button">New chat</button>
+    </div>
     <div id="chat"></div>
+    <div id="examples" class="examples">
+      <p class="examples-label">Try asking</p>
+      <div class="chips" id="chips"></div>
+    </div>
     <form id="form">
       <input id="question" placeholder="Ask about fees, loans, accounts…" autocomplete="off" />
-      <button id="send" type="submit">Ask</button>
+      <button id="send" class="primary" type="submit">Ask</button>
     </form>
   </div>
   <script>
@@ -42,44 +86,241 @@
     const form = document.getElementById("form");
     const input = document.getElementById("question");
     const send = document.getElementById("send");
+    const newChat = document.getElementById("newChat");
+    const examples = document.getElementById("examples");
+    const chips = document.getElementById("chips");
 
-    function addMessage(role, text, sources) {
-      const el = document.createElement("div");
-      el.className = "msg " + role;
-      el.textContent = text;
-      if (sources && sources.length) {
-        const s = document.createElement("span");
-        s.className = "src";
-        s.innerHTML = "Sources: " + sources.map((x, i) => `<a href="${x.url}" target="_blank">${i + 1}</a>`).join(", ");
-        el.appendChild(s);
-      }
-      chat.appendChild(el);
+    const EXAMPLES = [
+      { label: "Activate debit card", q: "How do I activate my new debit card?" },
+      { label: "Overdraft fees", q: "What are the overdraft fees?" },
+      { label: "Apply for a home loan", q: "How do I apply for a home loan?" },
+      { label: "Identity verification", q: "What documents do I need for identity verification?" },
+      { label: "Minimum balance", q: "What's the minimum balance for my checking account?" },
+      { label: "Branch hours", q: "What are your branch hours?" },
+    ];
+
+    function scrollToBottom() {
       window.scrollTo(0, document.body.scrollHeight);
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const q = input.value.trim();
+    function updateExamples() {
+      examples.style.display = chat.querySelector(".msg") ? "none" : "";
+    }
+
+    EXAMPLES.forEach(function (ex) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = ex.label;
+      b.addEventListener("click", function () { ask(ex.q); });
+      chips.appendChild(b);
+    });
+
+    function escapeHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function renderMarkdown(text) {
+      let html = escapeHtml(text);
+      html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      const out = [];
+      let listType = null;
+      const closeList = function () { if (listType) { out.push("</" + listType + ">"); listType = null; } };
+      html.split("\n").forEach(function (raw) {
+        const line = raw.trim();
+        if (!line) { closeList(); return; }
+        const ul = line.match(/^-\s+(.*)$/);
+        const ol = line.match(/^\d+[.)]\s+(.*)$/);
+        if (ul) {
+          if (listType !== "ul") { closeList(); out.push("<ul>"); listType = "ul"; }
+          out.push("<li>" + ul[1] + "</li>");
+        } else if (ol) {
+          if (listType !== "ol") { closeList(); out.push("<ol>"); listType = "ol"; }
+          out.push("<li>" + ol[1] + "</li>");
+        } else {
+          closeList();
+          out.push("<p>" + line + "</p>");
+        }
+      });
+      closeList();
+      return out.join("");
+    }
+
+    function addUserMessage(text) {
+      const el = document.createElement("div");
+      el.className = "msg user";
+      el.textContent = text;
+      chat.appendChild(el);
+      updateExamples();
+      scrollToBottom();
+    }
+
+    function addAssistantAnswer(text, sources, metaText) {
+      const el = document.createElement("div");
+      el.className = "msg assistant has-copy";
+
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "copy-btn";
+      copyBtn.textContent = "Copy";
+      copyBtn.setAttribute("aria-label", "Copy answer");
+      copyBtn.addEventListener("click", function () { copyText(text, copyBtn); });
+      el.appendChild(copyBtn);
+
+      const body = document.createElement("div");
+      body.className = "md";
+      body.innerHTML = renderMarkdown(text);
+      el.appendChild(body);
+
+      if (metaText) {
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = metaText;
+        el.appendChild(meta);
+      }
+
+      if (sources && sources.length) {
+        const s = document.createElement("div");
+        s.className = "src";
+        const label = document.createElement("span");
+        label.textContent = "Sources: ";
+        s.appendChild(label);
+        sources.forEach(function (x, i) {
+          const a = document.createElement("a");
+          a.href = x.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = String(i + 1);
+          s.appendChild(a);
+          if (i < sources.length - 1) s.appendChild(document.createTextNode(", "));
+        });
+        el.appendChild(s);
+      }
+
+      chat.appendChild(el);
+      updateExamples();
+      scrollToBottom();
+    }
+
+    function addError(message, retryQ) {
+      const el = document.createElement("div");
+      el.className = "msg assistant error";
+      const text = document.createElement("div");
+      text.className = "err-text";
+      text.textContent = message;
+      el.appendChild(text);
+      if (retryQ) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "retry-btn";
+        btn.textContent = "Try again";
+        btn.addEventListener("click", function () { ask(retryQ); });
+        el.appendChild(btn);
+      }
+      chat.appendChild(el);
+      updateExamples();
+      scrollToBottom();
+    }
+
+    function addTypingIndicator() {
+      const el = document.createElement("div");
+      el.className = "msg assistant typing";
+      el.setAttribute("aria-label", "Generating answer");
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        el.appendChild(dot);
+      }
+      chat.appendChild(el);
+      scrollToBottom();
+      return el;
+    }
+
+    function friendlyError(status, error) {
+      if (status === 429) return "You're sending requests too quickly. Please wait a moment and try again.";
+      if (status === 503) return "Service temporarily unavailable. Please try again shortly.";
+      if (status === 500) return "Something went wrong. Please try again.";
+      return error || "Something went wrong. Please try again.";
+    }
+
+    function buildMeta(data) {
+      const parts = [];
+      if (Array.isArray(data.sources)) parts.push(data.sources.length + (data.sources.length === 1 ? " source" : " sources"));
+      if (typeof data.latency_ms === "number") parts.push((data.latency_ms / 1000).toFixed(1) + "s");
+      if (data.model) parts.push(data.model);
+      return parts.length ? parts.join(" · ") : "";
+    }
+
+    function setLoading(loading) {
+      send.disabled = loading;
+      send.classList.toggle("loading", loading);
+    }
+
+    function copyText(text, btn) {
+      const done = function () {
+        btn.textContent = "Copied!";
+        setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text); done(); });
+      } else {
+        fallbackCopy(text);
+        done();
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+
+    async function ask(question) {
+      const q = (question || "").trim();
       if (!q) return;
-      addMessage("user", q);
+      addUserMessage(q);
       input.value = "";
-      send.disabled = true;
+      setLoading(true);
+      const typing = addTypingIndicator();
       try {
-        const res = await fetch(`${API_BASE}/ask`, {
+        const res = await fetch(API_BASE + "/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: q }),
         });
         const data = await res.json();
-        if (!res.ok) { addMessage("assistant", "Error: " + (data.error || res.status)); return; }
-        addMessage("assistant", data.answer, data.sources);
+        if (!res.ok) {
+          addError(friendlyError(res.status, data.error), q);
+          return;
+        }
+        addAssistantAnswer(data.answer, data.sources, buildMeta(data));
       } catch (err) {
-        addMessage("assistant", "Request failed: " + err.message);
+        addError("Request failed. Please check your connection and try again.", q);
       } finally {
-        send.disabled = false;
+        typing.remove();
+        setLoading(false);
         input.focus();
       }
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      ask(input.value);
     });
+
+    newChat.addEventListener("click", function () {
+      chat.innerHTML = "";
+      input.value = "";
+      updateExamples();
+      input.focus();
+    });
+
+    updateExamples();
   </script>
 </body>
 </html>
