@@ -18,6 +18,28 @@
     .ghost { background: transparent; border: 1px solid var(--border); color: var(--text); font-weight: 500; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
     .ghost:hover { border-color: var(--accent); color: var(--accent); }
 
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .nav { display: flex; gap: 2px; }
+    .nav-link { background: transparent; border: none; color: var(--muted); font-size: 0.85rem; padding: 8px 10px; cursor: pointer; border-radius: 8px; }
+    .nav-link:hover { color: var(--accent); }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .modal-overlay[hidden] { display: none; }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px 22px; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .modal-head h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .modal-close { background: transparent; border: none; color: var(--muted); font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body h3 { font-size: 0.95rem; margin: 16px 0 8px; }
+    .modal-body p { margin: 0 0 10px; line-height: 1.6; }
+    .modal-body ul { margin: 0 0 12px; padding-left: 20px; }
+    .modal-body li { margin: 6px 0; line-height: 1.5; }
+    ol.steps { list-style: none; padding-left: 0; margin: 0 0 12px; counter-reset: step; }
+    ol.steps li { position: relative; padding-left: 36px; margin: 14px 0; }
+    ol.steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #0f172a; font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+    ol.steps p { margin: 4px 0 0; }
+    .note { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+
     #chat { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
     .msg { padding: 12px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; position: relative; }
     .user { background: var(--accent); color: #0f172a; align-self: flex-end; max-width: 85%; }
@@ -73,7 +95,13 @@
         </div>
         <p class="sub">Financial institution member support — ask about fees, accounts, cards, and loans. Answers are grounded in official documents with citations.</p>
       </div>
-      <button id="newChat" class="ghost" type="button">New chat</button>
+      <div class="header-actions">
+        <nav class="nav" aria-label="Site">
+          <button class="nav-link" type="button" data-modal="about">About</button>
+          <button class="nav-link" type="button" data-modal="how-it-works">How it works</button>
+        </nav>
+        <button id="newChat" class="ghost" type="button">New chat</button>
+      </div>
     </div>
     <div id="chat"></div>
     <div id="examples" class="examples">
@@ -85,6 +113,54 @@
       <button id="send" class="primary" type="submit">Ask</button>
     </form>
   </div>
+
+  <div class="modal-overlay" id="modal-about" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <div class="modal-head">
+        <h2 id="about-title">About</h2>
+        <button class="modal-close" type="button" aria-label="Close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This is an <strong>AI-powered member support assistant</strong> for a financial institution. It answers questions about <strong>fees, accounts, cards, loans, KYC, and FAQs</strong> using <strong>RAG (Retrieval-Augmented Generation)</strong>.</p>
+        <p>Instead of replying from the model's general knowledge, the assistant first <strong>retrieves</strong> the most relevant passages from a knowledge base of <strong>31 official documents</strong>, then <strong>generates</strong> each answer <strong>grounded in those sources</strong> — with citations you can verify.</p>
+        <h3>Built with Azure AI</h3>
+        <ul>
+          <li><strong>Azure OpenAI</strong> — GPT-4.1-mini (answer generation) and text-embedding-3-small (embeddings)</li>
+          <li><strong>Azure AI Search</strong> — hybrid vector + keyword retrieval</li>
+          <li><strong>Azure App Service + Static Web App</strong> — Flask RAG API and this chat UI</li>
+        </ul>
+        <p class="note">Prototype — demonstrates RAG-based AI member support on Azure.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-how-it-works" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="how-title">
+      <div class="modal-head">
+        <h2 id="how-title">How it works</h2>
+        <button class="modal-close" type="button" aria-label="Close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This assistant uses <strong>RAG (Retrieval-Augmented Generation)</strong> — an AI pattern that grounds responses in a trusted knowledge base rather than relying on the model's general knowledge alone.</p>
+        <ol class="steps">
+          <li>
+            <strong>Ingest &amp; index</strong>
+            <p>The 31 official documents are split into chunks, converted into vectors with <strong>text-embedding-3-small</strong>, and stored in <strong>Azure AI Search</strong>.</p>
+          </li>
+          <li>
+            <strong>Retrieve</strong>
+            <p>Your question is embedded and matched using <strong>hybrid search</strong> — vector similarity plus keyword (BM25), fused with RRF — to surface the 5 most relevant passages.</p>
+          </li>
+          <li>
+            <strong>Generate</strong>
+            <p><strong>GPT-4.1-mini</strong> reads only those retrieved passages and writes a grounded answer with citations. If the answer isn't in the documents, it says so instead of guessing.</p>
+          </li>
+        </ol>
+        <p class="note">Why RAG? It keeps answers accurate and traceable — every response points back to a source document, which reduces hallucination.</p>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_BASE = "https://web-rag-rl01.azurewebsites.net";
     const chat = document.getElementById("chat");
@@ -323,6 +399,32 @@
       input.value = "";
       updateExamples();
       input.focus();
+    });
+
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.hidden = false;
+    }
+
+    function closeModal(overlay) {
+      overlay.hidden = true;
+    }
+
+    document.querySelectorAll("[data-modal]").forEach(function (btn) {
+      btn.addEventListener("click", function () { openModal("modal-" + btn.dataset.modal); });
+    });
+
+    document.querySelectorAll(".modal-overlay").forEach(function (overlay) {
+      overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(overlay); });
+      overlay.querySelectorAll("[data-close]").forEach(function (btn) {
+        btn.addEventListener("click", function () { closeModal(overlay); });
+      });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay:not([hidden])").forEach(function (m) { m.hidden = true; });
+      }
     });
 
     updateExamples();
