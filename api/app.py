@@ -75,7 +75,15 @@ def ask():
         return jsonify({"error": "question is required"}), 400
 
     start = time.time()
-    result = rag.generate(question)
+    try:
+        result = rag.generate(question)
+    except RuntimeError as exc:
+        # Retries exhausted (e.g. Azure OpenAI rate limit persisted).
+        app.logger.warning("ask failed: %s", exc)
+        return jsonify({"error": "service temporarily unavailable"}), 503
+    except Exception:
+        app.logger.exception("ask failed")
+        return jsonify({"error": "internal server error"}), 500
     result["latency_ms"] = int((time.time() - start) * 1000)
     result["model"] = rag.chat_deployment
     return jsonify(result)

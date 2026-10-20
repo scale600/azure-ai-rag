@@ -1,11 +1,16 @@
 import os
+import time
 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizedQuery
-from openai import AzureOpenAI
+from openai import AzureOpenAI, RateLimitError
 
 INDEX_NAME = "member-support"
+
+# Cap total retry wait below the App Service 230s request timeout.
+RATE_LIMIT_RETRIES = 4
+RATE_LIMIT_BASE_WAIT = 2.0  # seconds; exponential backoff
 
 SYSTEM_PROMPT = (
     "You are a member support assistant for a financial institution.\n"
@@ -32,8 +37,22 @@ class RAG:
         self.embedding_deployment = os.environ["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"]
         self.chat_deployment = os.environ.get("AZURE_OPENAI_CHAT_DEPLOYMENT", "gpt-4.1-mini")
 
+    def _retry(self, fn):
+        for attempt in range(RATE_LIMIT_RETRIES):
+            try:
+                return fn()
+            except RateLimitError:
+                wait = RATE_LIMIT_BASE_WAIT * (2**attempt)
+                print(f"rate limited, retrying in {wait:.1f}s", flush=True)
+                time.sleep(wait)
+        raise RuntimeError("Azure OpenAI rate limit persisted after retries")
+
     def embed_query(self, text):
-        response = self.openai_client.embeddings.create(model=self.embedding_deployment, input=[text])
+        response = self._retry(
+            lambda: self.openai_client.embeddings.create(
+                model=self.embedding_deployment, input=[text]
+            )
+        )
         return response.data[0].embedding
 
     def hybrid_search(self, question, top_k=5):
@@ -56,11 +75,13 @@ class RAG:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"[Reference Material]\n{context}\n\nQuestion: {question}"},
         ]
-        response = self.openai_client.chat.completions.create(
-            model=self.chat_deployment,
-            messages=messages,
-            temperature=0,
-            max_tokens=500,
+        response = self._retry(
+            lambda: self.openai_client.chat.completions.create(
+                model=self.chat_deployment,
+                messages=messages,
+                temperature=0,
+                max_tokens=500,
+            )
         )
         answer = response.choices[0].message.content
         sources = [
