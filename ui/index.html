@@ -60,9 +60,42 @@
 
     .meta { margin-top: 10px; color: var(--muted); font-size: 0.75rem; }
     .demo-tag { display: inline-block; margin-top: 8px; font-size: 0.7rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
-    .src { display: block; margin-top: 6px; color: var(--muted); font-size: 0.8rem; }
-    .src a { color: var(--accent); text-decoration: none; margin-right: 2px; }
-    .src a:hover { text-decoration: underline; }
+    .src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+    .src-label { color: var(--muted); font-size: 0.78rem; }
+    .src-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; color: var(--accent); text-decoration: none; }
+    .src-chip:hover { border-color: var(--accent); }
+    .src-chip .num { color: var(--muted); font-weight: 600; }
+
+    .feedback { display: flex; gap: 6px; margin-top: 10px; }
+    .fb-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px; background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; cursor: pointer; }
+    .fb-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .fb-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+    .fb-btn svg { width: 14px; height: 14px; }
+
+    .widget { margin-top: 12px; padding: 12px 14px; background: rgba(56, 189, 248, 0.04); border: 1px solid var(--border); border-radius: 12px; }
+    .widget-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+    .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    .bar-label { width: 128px; font-size: 0.8rem; color: var(--text); flex-shrink: 0; text-align: right; }
+    .bar-track { flex: 1; height: 8px; background: var(--panel); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; width: 0; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+    .bar-val { width: 34px; font-size: 0.8rem; color: var(--accent); font-weight: 600; flex-shrink: 0; text-align: right; }
+    .rate-row { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
+    .rate-label { width: 128px; font-size: 0.8rem; color: var(--text); flex-shrink: 0; text-align: right; }
+    .rate-track { flex: 1; height: 8px; background: var(--panel); border-radius: 999px; position: relative; }
+    .rate-range { position: absolute; top: 0; height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); border-radius: 999px; }
+    .rate-val { width: 96px; font-size: 0.8rem; color: var(--accent); font-weight: 600; flex-shrink: 0; text-align: right; }
+    .hours-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .day { padding: 8px 4px; border-radius: 8px; background: var(--panel); border: 1px solid var(--border); text-align: center; }
+    .day.today { border-color: var(--accent); }
+    .day.closed { opacity: 0.5; }
+    .day-name { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 3px; }
+    .day-hours { display: block; font-size: 0.72rem; color: var(--text); white-space: nowrap; }
+    .hours-status { margin-top: 10px; font-size: 0.78rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; flex-shrink: 0; }
+    .status-dot.closed-dot { background: var(--danger); }
+
+    .followups { margin-top: 12px; }
+    .followups-label { color: var(--muted); font-size: 0.78rem; margin: 0 0 8px; }
 
     .error { border: 1px solid rgba(252, 165, 165, 0.4); }
     .err-text { color: var(--danger); }
@@ -255,7 +288,7 @@
       scrollToBottom();
     }
 
-    function addAssistantAnswer(text, sources, metaText) {
+    function addAssistantAnswer(text, sources, metaText, q) {
       const el = document.createElement("div");
       el.className = "msg assistant has-copy";
 
@@ -280,22 +313,35 @@
       }
 
       if (sources && sources.length) {
+        const seen = {};
+        const unique = sources.filter(function (x) {
+          if (seen[x.title]) return false;
+          seen[x.title] = true;
+          return true;
+        });
         const s = document.createElement("div");
         s.className = "src";
         const label = document.createElement("span");
-        label.textContent = "Sources: ";
+        label.className = "src-label";
+        label.textContent = "Sources:";
         s.appendChild(label);
-        sources.forEach(function (x, i) {
+        unique.forEach(function (x, i) {
           const a = document.createElement("a");
+          a.className = "src-chip";
           a.href = x.url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
-          a.textContent = String(i + 1);
+          const num = document.createElement("span");
+          num.className = "num";
+          num.textContent = String(i + 1);
+          a.appendChild(num);
+          a.appendChild(document.createTextNode(" " + x.title));
           s.appendChild(a);
-          if (i < sources.length - 1) s.appendChild(document.createTextNode(", "));
         });
         el.appendChild(s);
       }
+
+      addFeedback(el, q);
 
       chat.appendChild(el);
       updateExamples();
@@ -398,7 +444,11 @@
           addError(friendlyError(res.status, data.error), q);
           return;
         }
-        addAssistantAnswer(data.answer, data.sources, buildMeta(data));
+        addAssistantAnswer(data.answer, data.sources, buildMeta(data), q);
+        const widget = renderWidget(q);
+        if (widget) chat.appendChild(widget);
+        chat.appendChild(renderFollowups(q));
+        scrollToBottom();
       } catch (err) {
         addError("Request failed. Please check your connection and try again.", q);
       } finally {
@@ -550,6 +600,254 @@
     function initDemo() {
       bindDemoStop();
       demoTimer = setTimeout(startDemo, 1500);
+    }
+
+    // --- Infographic widgets (frontend fact registry; zero-dependency charts) ---
+    const FACTS = {
+      fees: {
+        match: [/\bfees?\b/i, /\boverdraft\b/i, /\bcharges?\b/i, /\bwire\b/i, /\bstop payment\b/i],
+        type: "fee-bars",
+        title: "Standard fees",
+        items: [
+          { label: "Overdraft", value: 35 },
+          { label: "Stop payment", value: 30 },
+          { label: "Wire (outgoing)", value: 25 },
+          { label: "Returned deposit", value: 12 },
+          { label: "OD protection", value: 12 },
+          { label: "ATM (out-of-network)", value: 3 },
+        ],
+        followups: ["How can I avoid overdraft fees?", "Can I get a fee refunded?", "What are the ATM fees?"],
+      },
+      rates: {
+        match: [/\brates?\b/i, /\bapr\b/i, /\binterest\b/i],
+        type: "rate-range",
+        title: "Loan rate ranges (APR)",
+        scale: 24,
+        items: [
+          { label: "Personal", min: 7.99, max: 23.99 },
+          { label: "Auto (new)", min: 5.49, max: 12.99 },
+          { label: "Home", min: 6.25, max: 8.75 },
+        ],
+        followups: ["How are rates determined?", "Can I get a rate discount?", "What's the minimum credit score?"],
+      },
+      hours: {
+        match: [/\bhours?\b/i, /\bholidays?\b/i, /\bschedule\b/i, /\bsaturday\b/i, /\bsunday\b/i, /\bweekend\b/i],
+        type: "hours-grid",
+        title: "Branch hours",
+        days: [
+          { name: "Mon", open: 9, close: 17 },
+          { name: "Tue", open: 9, close: 17 },
+          { name: "Wed", open: 9, close: 17 },
+          { name: "Thu", open: 9, close: 17 },
+          { name: "Fri", open: 9, close: 17 },
+          { name: "Sat", open: 9, close: 13 },
+          { name: "Sun", open: null, close: null },
+        ],
+        followups: ["How do I find a nearby branch?", "Are branches open on holidays?", "Is there a drive-through?"],
+      },
+    };
+
+    function fmtHour(h) {
+      if (h < 12) return h + "a";
+      if (h === 12) return "12p";
+      return (h - 12) + "p";
+    }
+
+    function fmtPct(n) {
+      return n.toFixed(2).replace(/\.?0+$/, "");
+    }
+
+    function detectWidget(q) {
+      for (const key in FACTS) {
+        const fact = FACTS[key];
+        if (fact.match.some(function (re) { return re.test(q); })) return fact;
+      }
+      return null;
+    }
+
+    function renderFeeBars(fact) {
+      const el = document.createElement("div");
+      el.className = "widget";
+      const t = document.createElement("div");
+      t.className = "widget-title";
+      t.textContent = fact.title;
+      el.appendChild(t);
+      const max = Math.max.apply(null, fact.items.map(function (i) { return i.value; }));
+      fact.items.forEach(function (item) {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        const label = document.createElement("span");
+        label.className = "bar-label";
+        label.textContent = item.label;
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        const val = document.createElement("span");
+        val.className = "bar-val";
+        val.textContent = "$" + item.value;
+        row.appendChild(label);
+        row.appendChild(track);
+        track.appendChild(fill);
+        row.appendChild(val);
+        el.appendChild(row);
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { fill.style.width = (item.value / max * 100) + "%"; });
+        });
+      });
+      return el;
+    }
+
+    function renderRateRanges(fact) {
+      const el = document.createElement("div");
+      el.className = "widget";
+      const t = document.createElement("div");
+      t.className = "widget-title";
+      t.textContent = fact.title;
+      el.appendChild(t);
+      const scale = fact.scale || 24;
+      fact.items.forEach(function (item) {
+        const row = document.createElement("div");
+        row.className = "rate-row";
+        const label = document.createElement("span");
+        label.className = "rate-label";
+        label.textContent = item.label;
+        const track = document.createElement("div");
+        track.className = "rate-track";
+        const range = document.createElement("div");
+        range.className = "rate-range";
+        range.style.left = (item.min / scale * 100) + "%";
+        range.style.width = ((item.max - item.min) / scale * 100) + "%";
+        const val = document.createElement("span");
+        val.className = "rate-val";
+        val.textContent = fmtPct(item.min) + "–" + fmtPct(item.max) + "%";
+        row.appendChild(label);
+        row.appendChild(track);
+        track.appendChild(range);
+        row.appendChild(val);
+        el.appendChild(row);
+      });
+      return el;
+    }
+
+    function renderHoursGrid(fact) {
+      const el = document.createElement("div");
+      el.className = "widget";
+      const t = document.createElement("div");
+      t.className = "widget-title";
+      t.textContent = fact.title;
+      el.appendChild(t);
+
+      const grid = document.createElement("div");
+      grid.className = "hours-grid";
+      const now = new Date();
+      const todayIdx = (now.getDay() + 6) % 7; // Mon=0
+      let isOpen = false;
+      let closesAt = null;
+
+      fact.days.forEach(function (d, i) {
+        const day = document.createElement("div");
+        day.className = "day";
+        if (i === todayIdx) day.classList.add("today");
+        const name = document.createElement("span");
+        name.className = "day-name";
+        name.textContent = d.name;
+        const hours = document.createElement("span");
+        hours.className = "day-hours";
+        if (d.open === null) {
+          hours.textContent = "Closed";
+          day.classList.add("closed");
+        } else {
+          hours.textContent = fmtHour(d.open) + "–" + fmtHour(d.close);
+          if (i === todayIdx) {
+            const h = now.getHours() + now.getMinutes() / 60;
+            if (h >= d.open && h < d.close) { isOpen = true; closesAt = d.close; }
+          }
+        }
+        day.appendChild(name);
+        day.appendChild(hours);
+        grid.appendChild(day);
+      });
+      el.appendChild(grid);
+
+      const status = document.createElement("div");
+      status.className = "hours-status";
+      const dot = document.createElement("span");
+      dot.className = "status-dot" + (isOpen ? "" : " closed-dot");
+      const txt = document.createElement("span");
+      txt.textContent = isOpen ? "Currently open — closes " + fmtHour(closesAt) + " (your local time)" : "Currently closed";
+      status.appendChild(dot);
+      status.appendChild(txt);
+      el.appendChild(status);
+
+      return el;
+    }
+
+    function renderWidget(q) {
+      const fact = detectWidget(q);
+      if (!fact) return null;
+      if (fact.type === "fee-bars") return renderFeeBars(fact);
+      if (fact.type === "rate-range") return renderRateRanges(fact);
+      if (fact.type === "hours-grid") return renderHoursGrid(fact);
+      return null;
+    }
+
+    function renderFollowups(q) {
+      const fact = detectWidget(q);
+      const list = fact ? fact.followups : [
+        "What are the overdraft fees?",
+        "What are your loan rates?",
+        "What are your branch hours?",
+      ];
+      const wrap = document.createElement("div");
+      wrap.className = "followups";
+      const label = document.createElement("p");
+      label.className = "followups-label";
+      label.textContent = "Related questions";
+      wrap.appendChild(label);
+      list.forEach(function (fq) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = fq;
+        b.addEventListener("click", function () { ask(fq); });
+        wrap.appendChild(b);
+      });
+      return wrap;
+    }
+
+    function addFeedback(el, q) {
+      const wrap = document.createElement("div");
+      wrap.className = "feedback";
+      [
+        { icon: "up", label: "Helpful", path: "M7 10v12M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" },
+        { icon: "down", label: "Not helpful", path: "M17 14V2M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" },
+      ].forEach(function (opt) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "fb-btn";
+        b.setAttribute("aria-label", opt.label);
+        b.title = opt.label;
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", opt.path);
+        svg.appendChild(p);
+        b.appendChild(svg);
+        b.addEventListener("click", function () {
+          const all = wrap.querySelectorAll(".fb-btn");
+          all.forEach(function (o) { o.classList.remove("selected"); });
+          b.classList.add("selected");
+          console.log("feedback", { question: q, rating: opt.icon });
+        });
+        wrap.appendChild(b);
+      });
+      el.appendChild(wrap);
     }
 
     updateExamples();
